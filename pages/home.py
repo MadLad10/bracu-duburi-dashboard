@@ -44,12 +44,17 @@ for col, task in zip(task_cols, tasks):
     with col:
         st.markdown(
             f'<div style="background:#FFFFFF;border-radius:14px;padding:20px 16px;'
-            f'box-shadow:0 2px 16px rgba(13,27,42,0.07);border-top:5px solid {color}">'
-            f'<div style="font-size:18px;font-weight:900;color:{color};margin-bottom:6px">'
+            f'box-shadow:0 2px 16px rgba(13,27,42,0.07);border-top:5px solid {color};'
+            f'height:200px;display:flex;flex-direction:column;justify-content:space-between">'
+            f'<div>'
+            f'<div style="font-size:16px;font-weight:900;color:{color};margin-bottom:8px">'
             f'{task.get("name","")}</div>'
-            f'<div style="font-size:12px;color:#475569;line-height:1.5;margin-bottom:10px">'
+            f'<div style="font-size:11px;color:#475569;line-height:1.6;overflow:hidden;'
+            f'display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical">'
             f'{task.get("description","")}</div>'
-            f'{badge}</div>',
+            f'</div>'
+            f'<div style="margin-top:10px">{badge}</div>'
+            f'</div>',
             unsafe_allow_html=True,
         )
 
