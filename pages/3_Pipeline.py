@@ -6,37 +6,13 @@ try:
 except ImportError:
     _req = None
 
-st.set_page_config(
-    page_title="Automation Pipeline — BRACU Duburi",
-    page_icon="⚙️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-styles.inject()
-
 N8N_URL = "http://localhost:5678"
 
 data = content.load()
 pipeline = data.get("pipeline", {})
 
-with st.sidebar:
-    st.markdown("## BRACU Duburi")
-    st.markdown(
-        "<p style='color:#60A5FA;font-size:11px;font-weight:600;letter-spacing:2px'>"
-        "VISION PIPELINE</p>",
-        unsafe_allow_html=True,
-    )
-    st.divider()
-    st.page_link("dashboard.py",              label="Home",               icon="🏠")
-    st.page_link("pages/1_About.py",          label="About Competition",  icon="🏆")
-    st.page_link("pages/2_Tasks.py",          label="Competition Tasks",  icon="🎯")
-    st.page_link("pages/3_Pipeline.py",       label="Automation Pipeline", icon="⚙️")
-    st.page_link("pages/4_Task_Analytics.py", label="Task Analytics",     icon="📊")
-    auth.admin_widget()
-
 styles.page_header("Automation Pipeline", "Powered by n8n · End-to-End Annotation & Training")
 
-# ── Pipeline description ──────────────────────────────────────────────────────
 styles.section("How It Works")
 st.markdown(
     f'<div class="card" style="margin-bottom:20px">'
@@ -45,15 +21,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Pipeline steps ────────────────────────────────────────────────────────────
 styles.section("Pipeline Steps")
-
 STEPS = [
     ("01", "Split Video",   "Raw dive footage split into fixed-length clips for distribution."),
     ("02", "Send Emails",   "n8n sends annotator emails with video clips and task instructions."),
     ("03", "Annotate",      "Annotators label objects in CVAT and export YOLO 1.1 format zips."),
     ("04", "Receive Zips",  "n8n receives reply emails, extracts annotation zips automatically."),
-    ("05", "Merge & Split", "All annotations merged, deduplicated, and split 85/5/10 train/val/test."),
+    ("05", "Merge & Split", "All annotations merged and split 85/5/10 train/val/test."),
     ("06", "Train",         "YOLO11n trained on merged dataset with underwater augmentation."),
 ]
 
@@ -70,15 +44,12 @@ for col, (num, title, desc) in zip(step_cols, STEPS):
         )
 
 st.markdown("<br>", unsafe_allow_html=True)
-
-# ── n8n status ────────────────────────────────────────────────────────────────
 styles.section("n8n Status")
 
 n8n_online = False
 if _req:
     try:
-        resp = _req.get(f"{N8N_URL}/healthz", timeout=2)
-        n8n_online = resp.ok
+        n8n_online = _req.get(f"{N8N_URL}/healthz", timeout=2).ok
     except Exception:
         pass
 
@@ -94,11 +65,9 @@ with left:
         f'padding:18px 24px;display:flex;align-items:center;gap:16px">'
         f'<div style="width:12px;height:12px;border-radius:50%;background:{status_color};'
         f'flex-shrink:0;box-shadow:0 0 8px {status_color}88"></div>'
-        f'<div>'
-        f'<div style="font-size:13px;font-weight:800;color:{status_color}">n8n {status_text}</div>'
+        f'<div><div style="font-size:13px;font-weight:800;color:{status_color}">n8n {status_text}</div>'
         f'<div style="font-size:11px;color:#64748B;margin-top:2px">'
-        f'{N8N_URL} &nbsp;|&nbsp; Self-hosted workflow automation</div>'
-        f'</div></div>',
+        f'{N8N_URL} &nbsp;|&nbsp; Self-hosted workflow automation</div></div></div>',
         unsafe_allow_html=True,
     )
 with right:
