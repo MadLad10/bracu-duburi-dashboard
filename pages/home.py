@@ -22,7 +22,7 @@ st.markdown(f"""
 cols = st.columns(4)
 with cols[0]: styles.metric_card("Tasks",      str(len(tasks)),        "competition tasks",  "")
 with cols[1]: styles.metric_card("Saved Runs", str(len(saved_runs)),   "trained models",     "green")
-with cols[2]: styles.metric_card("Workflow Automation", "n8n",         "email distribution & collection", "purple")
+with cols[2]: styles.metric_card("Workflow Automation", "n8n",         "dataset distribution & collection", "purple")
 with cols[3]: styles.metric_card("Competition","2026",                  "RoboSub San Diego",  "amber")
 
 st.markdown("<br>", unsafe_allow_html=True)
