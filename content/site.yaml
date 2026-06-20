@@ -20,32 +20,47 @@ about:
 
 tasks:
   - id: gate
-    name: Gate
-    description: Navigate autonomously through the gate structure at the start of the course.
+    name: Begin Assessment
+    description: >
+      Head out to assess the environment. The AUV navigates through a buoyant PVC gate
+      with colored panels to select a mission role — Survey & Repair or Search & Rescue.
+      Bonus points are awarded for stylistic maneuvers through the gate.
     run_name: Gate
     color: "#2563EB"
 
-  - id: torpedo
-    name: Torpedo
-    description: Fire torpedoes accurately through target holes on a board.
-    run_name: Torpedo
-    color: "#059669"
-
   - id: slalom
-    name: Slalom
-    description: Weave through a series of vertical poles without contact.
+    name: Avoid Debris
+    description: >
+      Navigate a channel blocked with debris. The AUV passes through three sets of
+      vertical red and white PVC pipes, earning more points for maintaining correct
+      depth and staying aligned with the initial gate orientation.
     run_name: Slalom
     color: "#7C3AED"
 
   - id: bin
-    name: Bin Drop
-    description: Identify and drop markers into the correct bins.
+    name: Recon
+    description: >
+      Recon the area to determine what assistance to provide. The AUV drops markers
+      into bins along a PVC pipeline and interacts with magnetic detectors to deactivate
+      lights, scored on accuracy relative to the chosen mission role.
     run_name: Bin
     color: "#D97706"
 
+  - id: torpedo
+    name: Deploy
+    description: >
+      Provide necessary assistance. The AUV fires torpedoes through openings on a
+      vertical board — maximum points for hitting larger openings first, then smaller
+      ones at increasing distances.
+    run_name: Torpedo
+    color: "#059669"
+
   - id: octagon
-    name: Octagon
-    description: Surface inside the octagon structure at the end of the run.
+    name: Restore
+    description: >
+      Restore vital infrastructure and health. The AUV surfaces within a nine-foot
+      octagon, retrieves role-specific items from a table, places them in baskets,
+      and orients toward corresponding directional markers while rotating.
     run_name: Octagon
     color: "#DC2626"
 
