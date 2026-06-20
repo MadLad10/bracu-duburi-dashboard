@@ -1,0 +1,56 @@
+site:
+  title: BRACU DUBURI
+  subtitle: VISION PIPELINE AUTOMATION
+  tagline: Autonomous Underwater Vehicle · Object Detection System
+  team_name: Team BRACU Duburi
+  competition: RoboSub 2026
+
+about:
+  competition_name: RoboSub 2026
+  competition_description: >
+    RoboSub is an international autonomous underwater vehicle (AUV) student competition
+    hosted by RoboNation. Teams design, build, and program AUVs to complete a series
+    of underwater tasks autonomously — no human control allowed during the run.
+  venue: Transdec Underwater Environment, San Diego, CA
+  date: July 2026
+  team_description: >
+    BRACU Duburi is the AUV team from BRAC University, Dhaka, Bangladesh.
+    Our vision system uses YOLO-based object detection trained on custom
+    underwater datasets collected during pool trials.
+
+tasks:
+  - id: gate
+    name: Gate
+    description: Navigate autonomously through the gate structure at the start of the course.
+    run_name: Gate
+    color: "#2563EB"
+
+  - id: torpedo
+    name: Torpedo
+    description: Fire torpedoes accurately through target holes on a board.
+    run_name: Torpedo
+    color: "#059669"
+
+  - id: slalom
+    name: Slalom
+    description: Weave through a series of vertical poles without contact.
+    run_name: Slalom
+    color: "#7C3AED"
+
+  - id: bin
+    name: Bin Drop
+    description: Identify and drop markers into the correct bins.
+    run_name: Bin
+    color: "#D97706"
+
+  - id: octagon
+    name: Octagon
+    description: Surface inside the octagon structure at the end of the run.
+    run_name: Octagon
+    color: "#DC2626"
+
+pipeline:
+  description: >
+    The annotation and training pipeline is fully automated using n8n workflow automation.
+    Videos are split into parts, distributed to annotators via Gmail, and merged datasets
+    are trained automatically on YOLO11n with underwater augmentation.
