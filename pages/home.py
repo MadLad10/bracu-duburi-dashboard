@@ -29,11 +29,12 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # Task overview
 styles.section("Competition Tasks")
-task_cols = st.columns(len(tasks) if tasks else 1)
-for col, task in zip(task_cols, tasks):
-    color = task.get("color", "#2563EB")
+
+cards_html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:stretch">'
+for task in tasks:
+    color    = task.get("color", "#2563EB")
     run_name = task.get("run_name", "")
-    has_run = (saved_runs_dir / run_name).exists() if run_name else False
+    has_run  = (saved_runs_dir / run_name).exists() if run_name else False
     badge = (
         f'<span style="font-size:10px;background:#F0FDF4;color:#059669;'
         f'border:1px solid #BBF7D0;border-radius:20px;padding:2px 8px;font-weight:700">Data ready</span>'
@@ -41,22 +42,21 @@ for col, task in zip(task_cols, tasks):
         f'<span style="font-size:10px;background:#F8FAFC;color:#94A3B8;'
         f'border:1px solid #E2E8F0;border-radius:20px;padding:2px 8px;font-weight:600">Pending</span>'
     )
-    with col:
-        st.markdown(
-            f'<div style="background:#FFFFFF;border-radius:14px;padding:20px 16px;'
-            f'box-shadow:0 2px 16px rgba(13,27,42,0.07);border-top:5px solid {color};'
-            f'height:200px;display:flex;flex-direction:column;justify-content:space-between">'
-            f'<div>'
-            f'<div style="font-size:16px;font-weight:900;color:{color};margin-bottom:8px">'
-            f'{task.get("name","")}</div>'
-            f'<div style="font-size:11px;color:#475569;line-height:1.6;overflow:hidden;'
-            f'display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical">'
-            f'{task.get("description","")}</div>'
-            f'</div>'
-            f'<div style="margin-top:10px">{badge}</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
+    cards_html += (
+        f'<div style="background:#FFFFFF;border-radius:14px;padding:20px 16px;'
+        f'box-shadow:0 2px 16px rgba(13,27,42,0.07);border-top:5px solid {color};'
+        f'display:flex;flex-direction:column;justify-content:space-between">'
+        f'<div>'
+        f'<div style="font-size:15px;font-weight:900;color:{color};margin-bottom:8px">'
+        f'{task.get("name","")}</div>'
+        f'<div style="font-size:11px;color:#475569;line-height:1.6">'
+        f'{task.get("description","")}</div>'
+        f'</div>'
+        f'<div style="margin-top:12px">{badge}</div>'
+        f'</div>'
+    )
+cards_html += '</div>'
+st.markdown(cards_html, unsafe_allow_html=True)
 
 st.divider()
 
