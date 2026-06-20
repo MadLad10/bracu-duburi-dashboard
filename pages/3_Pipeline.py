@@ -80,7 +80,6 @@ else:
     st.warning(
         "n8n is not running locally. Start it with `docker run -p 5678:5678 n8nio/n8n` "
         "to see the live workflow editor here.",
-        icon="⚠️",
     )
 
 styles.footer()

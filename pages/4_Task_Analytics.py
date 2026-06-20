@@ -286,7 +286,7 @@ for tab, task in zip(tabs, tasks):
 
         else:
             if has_saved:
-                st.info("Showing saved training results for this task.", icon="📊")
+                st.info("Showing saved training results for this task.")
                 show_run_analytics(saved_run_dir, task_color)
                 st.divider()
 

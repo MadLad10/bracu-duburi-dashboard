@@ -7,7 +7,7 @@ about = data.get("about", {})
 styles.page_header("About the Competition", "RoboSub 2026 · International AUV Challenge")
 
 if auth.is_admin():
-    st.info("**Admin mode** — edit the content below and save.", icon="🔒")
+    st.info("**Admin mode** — edit the content below and save.")
 
 col1, col2 = st.columns([3, 2])
 
@@ -23,8 +23,8 @@ with col1:
         st.markdown(f"### {about.get('competition_name', 'RoboSub 2026')}")
         st.markdown(about.get("competition_description", ""))
         st.markdown(
-            f"📍 **Venue:** {about.get('venue', '')}  \n"
-            f"📅 **Date:** {about.get('date', '')}",
+            f"**Venue:** {about.get('venue', '')}  \n"
+            f"**Date:** {about.get('date', '')}",
         )
 
 with col2:

@@ -7,7 +7,7 @@ tasks = data.get("tasks", [])
 styles.page_header("Competition Tasks", "RoboSub 2026 · Underwater Challenges")
 
 if auth.is_admin():
-    st.info("**Admin mode** — expand any task to edit its details.", icon="🔒")
+    st.info("**Admin mode** — expand any task to edit its details.")
 
 for i, task in enumerate(tasks):
     color = task.get("color", "#2563EB")
@@ -40,7 +40,8 @@ for i, task in enumerate(tasks):
                 f'<div style="background:{color};border-radius:50%;width:64px;height:64px;'
                 f'display:flex;align-items:center;justify-content:center;margin:auto;'
                 f'box-shadow:0 4px 16px {color}66">'
-                f'<span style="font-size:28px">🎯</span></div>'
+                f'<span style="font-size:13px;font-weight:900;color:#FFFFFF;letter-spacing:1px">'
+                f'{task.get("name","")[:2].upper()}</span></div>'
                 f'<p style="text-align:center;font-size:11px;color:{color};font-weight:800;'
                 f'margin-top:10px;text-transform:uppercase;letter-spacing:1px">'
                 f'{task.get("name","")}</p>',

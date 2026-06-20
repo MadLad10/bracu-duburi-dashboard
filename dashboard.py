@@ -3,7 +3,7 @@ from utils import styles, auth
 
 st.set_page_config(
     page_title="BRACU Duburi — Vision Pipeline",
-    page_icon="🤿",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -21,10 +21,10 @@ with st.sidebar:
     auth.admin_widget()
 
 pg = st.navigation([
-    st.Page("pages/home.py",             title="Home",                icon="🏠"),
-    st.Page("pages/1_About.py",          title="About Competition",   icon="🏆"),
-    st.Page("pages/2_Tasks.py",          title="Competition Tasks",   icon="🎯"),
-    st.Page("pages/3_Pipeline.py",       title="Automation Pipeline", icon="⚙️"),
-    st.Page("pages/4_Task_Analytics.py", title="Task Analytics",      icon="📊"),
+    st.Page("pages/home.py",             title="Home"),
+    st.Page("pages/1_About.py",          title="About Competition"),
+    st.Page("pages/2_Tasks.py",          title="Competition Tasks"),
+    st.Page("pages/3_Pipeline.py",       title="Automation Pipeline"),
+    st.Page("pages/4_Task_Analytics.py", title="Task Analytics"),
 ])
 pg.run()

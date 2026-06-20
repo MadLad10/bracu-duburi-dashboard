@@ -36,7 +36,7 @@ for col, task in zip(task_cols, tasks):
     has_run = (saved_runs_dir / run_name).exists() if run_name else False
     badge = (
         f'<span style="font-size:10px;background:#F0FDF4;color:#059669;'
-        f'border:1px solid #BBF7D0;border-radius:20px;padding:2px 8px;font-weight:700">✓ Data ready</span>'
+        f'border:1px solid #BBF7D0;border-radius:20px;padding:2px 8px;font-weight:700">Data ready</span>'
         if has_run else
         f'<span style="font-size:10px;background:#F8FAFC;color:#94A3B8;'
         f'border:1px solid #E2E8F0;border-radius:20px;padding:2px 8px;font-weight:600">Pending</span>'
@@ -71,6 +71,6 @@ for col, (i, name) in zip(step_cols, enumerate(steps, 1)):
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.info("The entire annotation and training pipeline is automated via **n8n**. "
-        "Go to **Automation Pipeline** for details.", icon="⚙️")
+        "Go to **Automation Pipeline** for details.")
 
 styles.footer()
