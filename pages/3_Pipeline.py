@@ -28,7 +28,7 @@ STEPS = [
     ("03", "Annotate",      "Annotators label objects in CVAT and export YOLO 1.1 format zips."),
     ("04", "Receive Zips",  "n8n receives reply emails, extracts annotation zips automatically."),
     ("05", "Merge & Split", "All annotations merged and split 85/5/10 train/val/test."),
-    ("06", "Train",         "YOLO11n trained on merged dataset with underwater augmentation."),
+    ("06", "Train",         "YOLO trained on merged dataset with underwater augmentation."),
 ]
 
 step_cols = st.columns(len(STEPS))

@@ -75,4 +75,4 @@ pipeline:
   description: >
     The annotation and training pipeline is fully automated using n8n workflow automation.
     Videos are split into parts, distributed to annotators via Gmail, and merged datasets
-    are trained automatically on YOLO11n with underwater augmentation.
+    are trained automatically on YOLO with underwater augmentation.

@@ -230,7 +230,7 @@ def show_run_analytics(run_dir: Path, task_color: str) -> None:
 data = content.load()
 tasks = data.get("tasks", [])
 
-styles.page_header("Task Analytics", "Per-Task Training Results · YOLO11n")
+styles.page_header("Task Analytics", "Per-Task Training Results · YOLO")
 
 if not tasks:
     st.warning("No tasks configured. Check content/site.yaml.")
@@ -266,7 +266,7 @@ for tab, task in zip(tabs, tasks):
 
             if view_mode == "Import Directory":
                 dir_path = st.text_input("Run directory path", key=f"dirpath_{task_name}",
-                                         placeholder=r"C:\...\runs\train\yolo11n_custom")
+                                         placeholder=r"C:\...\runs\train\yolo_custom")
                 run_dir = Path(dir_path) if dir_path else None
                 if run_dir and run_dir.exists() and (run_dir / "results.csv").exists():
                     _, btn_col = st.columns([3, 1])

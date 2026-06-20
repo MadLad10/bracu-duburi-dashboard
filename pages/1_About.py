@@ -97,7 +97,7 @@ with col2:
         '</div>'
         '<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">'
         '<div style="font-size:10px;color:#64748B;text-transform:uppercase;letter-spacing:1px">Detection</div>'
-        '<div style="font-size:13px;font-weight:700;color:#F1F5F9;margin-top:2px">YOLO11n</div>'
+        '<div style="font-size:13px;font-weight:700;color:#F1F5F9;margin-top:2px">YOLO</div>'
         '</div>'
         '<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">'
         '<div style="font-size:10px;color:#64748B;text-transform:uppercase;letter-spacing:1px">Competition</div>'

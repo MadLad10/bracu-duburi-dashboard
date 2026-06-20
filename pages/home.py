@@ -65,7 +65,7 @@ styles.section("Vision Pipeline")
 vision_steps = [
     ("01", "Capture",    "Dive footage recorded during pool trials"),
     ("02", "Annotate",   "Objects labelled per task in CVAT"),
-    ("03", "Train",      "YOLO11n trained on custom underwater data"),
+    ("03", "Train",      "YOLO trained on custom underwater data"),
     ("04", "Detect",     "Real-time object detection on the AUV"),
     ("05", "Decide",     "Detections feed the autonomy controller"),
 ]
@@ -83,62 +83,74 @@ for col, (num, title, desc) in zip(v_cols, vision_steps):
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Dataset collection pipeline — clearly split what n8n does vs what humans do
+# Dataset collection pipeline
 styles.section("Dataset Collection Pipeline")
-st.markdown(
-    '<p style="font-size:12px;color:#64748B;margin:-10px 0 16px 0">'
-    'n8n handles <strong>distribution and collection only</strong> — '
-    'annotation is done by human annotators in CVAT.</p>',
-    unsafe_allow_html=True,
-)
 
-# Two groups: n8n-automated steps and manual steps
-col_l, col_r = st.columns([3, 2], gap="large")
+st.markdown("""
+<div style="background:linear-gradient(135deg,#0D1B2A 0%,#1B3A5C 100%);
+            border-radius:16px;padding:32px 36px;margin-bottom:24px">
 
-with col_l:
-    st.markdown(
-        '<p style="font-size:10px;font-weight:800;color:#2563EB;text-transform:uppercase;'
-        'letter-spacing:2px;margin-bottom:10px">Automated by n8n</p>',
-        unsafe_allow_html=True,
-    )
-    n8n_steps = [
-        ("01", "Split Video",  "Footage split into clips"),
-        ("02", "Send Emails",  "Clips distributed to annotators via Gmail"),
-        ("03", "Receive Zips", "Annotated zips collected from replies"),
-        ("04", "Merge & Train","Dataset merged, YOLO11n trained locally"),
-    ]
-    n8n_cols = st.columns(len(n8n_steps))
-    for col, (num, title, desc) in zip(n8n_cols, n8n_steps):
-        with col:
-            st.markdown(
-                f'<div class="step-card" style="border-top:3px solid #2563EB">'
-                f'<div class="step-num">{num}</div>'
-                f'<div class="step-title">{title}</div>'
-                f'<div style="font-size:10px;color:#64748B;line-height:1.5;margin-top:6px">{desc}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0">
 
-with col_r:
-    st.markdown(
-        '<p style="font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;'
-        'letter-spacing:2px;margin-bottom:10px">Done by Humans</p>',
-        unsafe_allow_html=True,
-    )
-    human_steps = [
-        ("A", "Label in CVAT", "Annotators draw bounding boxes on received clips"),
-        ("B", "Export & Reply", "YOLO 1.1 zip exported and sent back via email"),
-    ]
-    h_cols = st.columns(len(human_steps))
-    for col, (num, title, desc) in zip(h_cols, human_steps):
-        with col:
-            st.markdown(
-                f'<div class="step-card" style="border-top:3px solid #94A3B8">'
-                f'<div class="step-num" style="background:#475569">{num}</div>'
-                f'<div class="step-title">{title}</div>'
-                f'<div style="font-size:10px;color:#64748B;line-height:1.5;margin-top:6px">{desc}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+    <!-- n8n automated block -->
+    <div>
+      <div style="font-size:10px;font-weight:800;color:#60A5FA;text-transform:uppercase;
+                  letter-spacing:3px;margin-bottom:18px">Automated by n8n</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="background:rgba(37,99,235,0.2);border:1px solid rgba(37,99,235,0.4);
+                    border-radius:10px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:800;color:#93C5FD;letter-spacing:0.5px">01 &nbsp; Split Video</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:3px">Dive footage split into labelled clips</div>
+        </div>
+        <div style="background:rgba(37,99,235,0.2);border:1px solid rgba(37,99,235,0.4);
+                    border-radius:10px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:800;color:#93C5FD;letter-spacing:0.5px">02 &nbsp; Distribute</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:3px">Clips sent to annotators via Gmail</div>
+        </div>
+        <div style="background:rgba(37,99,235,0.2);border:1px solid rgba(37,99,235,0.4);
+                    border-radius:10px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:800;color:#93C5FD;letter-spacing:0.5px">04 &nbsp; Collect</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:3px">Annotated zips received and extracted automatically</div>
+        </div>
+        <div style="background:rgba(37,99,235,0.2);border:1px solid rgba(37,99,235,0.4);
+                    border-radius:10px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:800;color:#93C5FD;letter-spacing:0.5px">05 &nbsp; Merge & Train</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:3px">Dataset merged, YOLO trained locally</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding:0 32px;gap:8px">
+      <div style="width:1px;height:60px;background:rgba(255,255,255,0.1)"></div>
+      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+                  border-radius:8px;padding:8px 14px;font-size:10px;font-weight:800;
+                  color:#475569;text-transform:uppercase;letter-spacing:2px;white-space:nowrap">
+        Step 03
+      </div>
+      <div style="width:1px;height:60px;background:rgba(255,255,255,0.1)"></div>
+    </div>
+
+    <!-- Human block -->
+    <div>
+      <div style="font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;
+                  letter-spacing:3px;margin-bottom:18px">Done by Human Annotators</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+                    border-radius:10px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:800;color:#CBD5E1;letter-spacing:0.5px">Label in CVAT</div>
+          <div style="font-size:11px;color:#64748B;margin-top:3px">Bounding boxes drawn on each clip per task</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+                    border-radius:10px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:800;color:#CBD5E1;letter-spacing:0.5px">Export & Reply</div>
+          <div style="font-size:11px;color:#64748B;margin-top:3px">YOLO format zip exported and sent back via email</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 styles.footer()
