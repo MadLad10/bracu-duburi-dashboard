@@ -8,15 +8,22 @@ site:
 about:
   competition_name: RoboSub 2026
   competition_description: >
-    RoboSub is an international autonomous underwater vehicle (AUV) student competition
-    hosted by RoboNation. Teams design, build, and program AUVs to complete a series
-    of underwater tasks autonomously — no human control allowed during the run.
-  venue: Irvine, California
-  date: July 2026
+    RoboSub is an international student competition where teams from around the world
+    design and build Autonomous Underwater Vehicles (AUVs). Vehicles navigate underwater
+    tasks fully autonomously — no human control is allowed during the run. The competition
+    is hosted by RoboNation and emphasizes real-world applications including underwater
+    exploration, seafloor mapping, and sonar localization.
+  venue: Woollett Aquatics Center, Irvine, California, USA
+  date: July 11–16, 2026
+  format: >
+    Teams follow a three-stage structure — Design & Build, Underwater Tasks, and Scoring.
+    Vehicles must navigate gates, identify buoys, drop markers into bins, fire torpedoes,
+    and surface inside a final octagon structure, all without any human intervention.
   team_description: >
     BRACU Duburi is the AUV team from BRAC University, Dhaka, Bangladesh.
     Our vision system uses YOLO-based object detection trained on custom
-    underwater datasets collected during pool trials.
+    underwater datasets collected during pool trials and annotated through
+    an automated n8n pipeline.
 
 tasks:
   - id: gate
