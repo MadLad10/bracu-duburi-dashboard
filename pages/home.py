@@ -78,30 +78,62 @@ for col, (num, title, desc) in zip(v_cols, vision_steps):
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Annotation workflow — what n8n handles
-styles.section("Annotation Workflow — Automated via n8n")
-annot_steps = [
-    ("01", "Split Video",  "Footage split into clips for distribution"),
-    ("02", "Send Emails",  "Clips sent to annotators via Gmail"),
-    ("03", "Annotate",     "Annotators label in CVAT, export YOLO zips"),
-    ("04", "Receive Zips", "n8n collects replies and extracts zips"),
-    ("05", "Merge",        "Annotations merged and deduplicated"),
-    ("06", "Train",        "YOLO11n trained on the merged dataset"),
-]
-a_cols = st.columns(len(annot_steps))
-for col, (num, title, desc) in zip(a_cols, annot_steps):
-    with col:
-        st.markdown(
-            f'<div class="step-card">'
-            f'<div class="step-num">{num}</div>'
-            f'<div class="step-title">{title}</div>'
-            f'<div style="font-size:10px;color:#64748B;line-height:1.5;margin-top:6px">{desc}</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
+# Dataset collection pipeline — clearly split what n8n does vs what humans do
+styles.section("Dataset Collection Pipeline")
+st.markdown(
+    '<p style="font-size:12px;color:#64748B;margin:-10px 0 16px 0">'
+    'n8n handles <strong>distribution and collection only</strong> — '
+    'annotation is done by human annotators in CVAT.</p>',
+    unsafe_allow_html=True,
+)
 
-st.markdown("<br>", unsafe_allow_html=True)
-st.info("n8n automates the annotation distribution and collection workflow only. "
-        "YOLO training and inference run locally on the AUV team's hardware.")
+# Two groups: n8n-automated steps and manual steps
+col_l, col_r = st.columns([3, 2], gap="large")
+
+with col_l:
+    st.markdown(
+        '<p style="font-size:10px;font-weight:800;color:#2563EB;text-transform:uppercase;'
+        'letter-spacing:2px;margin-bottom:10px">Automated by n8n</p>',
+        unsafe_allow_html=True,
+    )
+    n8n_steps = [
+        ("01", "Split Video",  "Footage split into clips"),
+        ("02", "Send Emails",  "Clips distributed to annotators via Gmail"),
+        ("03", "Receive Zips", "Annotated zips collected from replies"),
+        ("04", "Merge & Train","Dataset merged, YOLO11n trained locally"),
+    ]
+    n8n_cols = st.columns(len(n8n_steps))
+    for col, (num, title, desc) in zip(n8n_cols, n8n_steps):
+        with col:
+            st.markdown(
+                f'<div class="step-card" style="border-top:3px solid #2563EB">'
+                f'<div class="step-num">{num}</div>'
+                f'<div class="step-title">{title}</div>'
+                f'<div style="font-size:10px;color:#64748B;line-height:1.5;margin-top:6px">{desc}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+with col_r:
+    st.markdown(
+        '<p style="font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;'
+        'letter-spacing:2px;margin-bottom:10px">Done by Humans</p>',
+        unsafe_allow_html=True,
+    )
+    human_steps = [
+        ("A", "Label in CVAT", "Annotators draw bounding boxes on received clips"),
+        ("B", "Export & Reply", "YOLO 1.1 zip exported and sent back via email"),
+    ]
+    h_cols = st.columns(len(human_steps))
+    for col, (num, title, desc) in zip(h_cols, human_steps):
+        with col:
+            st.markdown(
+                f'<div class="step-card" style="border-top:3px solid #94A3B8">'
+                f'<div class="step-num" style="background:#475569">{num}</div>'
+                f'<div class="step-title">{title}</div>'
+                f'<div style="font-size:10px;color:#64748B;line-height:1.5;margin-top:6px">{desc}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
 styles.footer()
