@@ -22,7 +22,7 @@ st.markdown(f"""
 cols = st.columns(4)
 with cols[0]: styles.metric_card("Tasks",      str(len(tasks)),        "competition tasks",  "")
 with cols[1]: styles.metric_card("Saved Runs", str(len(saved_runs)),   "trained models",     "green")
-with cols[2]: styles.metric_card("Pipeline",   "n8n",                  "fully automated",    "purple")
+with cols[2]: styles.metric_card("Annotation", "n8n",                  "workflow automation", "purple")
 with cols[3]: styles.metric_card("Competition","2026",                  "RoboSub San Diego",  "amber")
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -55,22 +55,53 @@ for col, task in zip(task_cols, tasks):
 
 st.divider()
 
-# Pipeline overview
-styles.section("Automation Pipeline")
-steps = ["Split Video", "Send Emails", "Annotate", "Receive Zips", "Merge & Split", "Train"]
-step_cols = st.columns(len(steps))
-for col, (i, name) in zip(step_cols, enumerate(steps, 1)):
+# Vision pipeline — what the system actually does
+styles.section("Vision Pipeline")
+vision_steps = [
+    ("01", "Capture",    "Dive footage recorded during pool trials"),
+    ("02", "Annotate",   "Objects labelled per task in CVAT"),
+    ("03", "Train",      "YOLO11n trained on custom underwater data"),
+    ("04", "Detect",     "Real-time object detection on the AUV"),
+    ("05", "Decide",     "Detections feed the autonomy controller"),
+]
+v_cols = st.columns(len(vision_steps))
+for col, (num, title, desc) in zip(v_cols, vision_steps):
     with col:
         st.markdown(
             f'<div class="step-card">'
-            f'<div class="step-num">{i:02d}</div>'
-            f'<div class="step-title">{name}</div>'
+            f'<div class="step-num" style="background:#0F172A">{num}</div>'
+            f'<div class="step-title">{title}</div>'
+            f'<div style="font-size:10px;color:#64748B;line-height:1.5;margin-top:6px">{desc}</div>'
             f'</div>',
             unsafe_allow_html=True,
         )
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.info("The entire annotation and training pipeline is automated via **n8n**. "
-        "Go to **Automation Pipeline** for details.")
+
+# Annotation workflow — what n8n handles
+styles.section("Annotation Workflow — Automated via n8n")
+annot_steps = [
+    ("01", "Split Video",  "Footage split into clips for distribution"),
+    ("02", "Send Emails",  "Clips sent to annotators via Gmail"),
+    ("03", "Annotate",     "Annotators label in CVAT, export YOLO zips"),
+    ("04", "Receive Zips", "n8n collects replies and extracts zips"),
+    ("05", "Merge",        "Annotations merged and deduplicated"),
+    ("06", "Train",        "YOLO11n trained on the merged dataset"),
+]
+a_cols = st.columns(len(annot_steps))
+for col, (num, title, desc) in zip(a_cols, annot_steps):
+    with col:
+        st.markdown(
+            f'<div class="step-card">'
+            f'<div class="step-num">{num}</div>'
+            f'<div class="step-title">{title}</div>'
+            f'<div style="font-size:10px;color:#64748B;line-height:1.5;margin-top:6px">{desc}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.info("n8n automates the annotation distribution and collection workflow only. "
+        "YOLO training and inference run locally on the AUV team's hardware.")
 
 styles.footer()
