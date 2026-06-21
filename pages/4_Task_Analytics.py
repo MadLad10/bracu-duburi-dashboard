@@ -262,25 +262,18 @@ for tab, task in zip(tabs, tasks):
 
         if auth.is_admin():
             if has_saved:
-                modes = ["Saved Run", "Upload Zip", "Import Directory (local only)"]
+                view_mode = st.radio("View", ["Saved Run", "Upload New Run"], horizontal=True,
+                                     key=f"viewmode_{task_name}", label_visibility="collapsed")
             else:
-                modes = ["Upload Zip", "Import Directory (local only)"]
-            view_mode = st.radio("View", modes, horizontal=True,
-                                 key=f"viewmode_{task_name}", label_visibility="collapsed")
+                view_mode = "Upload New Run"
 
             if view_mode == "Saved Run":
                 show_run_analytics(saved_run_dir, task_color)
 
-            elif view_mode == "Upload Zip":
-                st.markdown(
-                    '<p style="font-size:11px;color:#64748B;margin-bottom:8px">'
-                    'Upload a zip of your run folder — <strong>results.csv required, no .pt weights</strong>. '
-                    'To make it permanent, run <code>git add saved_runs/ && git push</code> after saving locally.</p>',
-                    unsafe_allow_html=True,
-                )
+            else:
                 uploaded = st.file_uploader(
-                    "Drop zip here", type=["zip"],
-                    key=f"upload_admin_{task_name}", label_visibility="collapsed",
+                    "Upload run zip (no weights needed)",
+                    type=["zip"], key=f"upload_admin_{task_name}",
                 )
                 if uploaded:
                     with tempfile.TemporaryDirectory() as tmpdir:
@@ -291,37 +284,14 @@ for tab, task in zip(tabs, tasks):
                         run_root = next(
                             (p.parent for p in Path(tmpdir).rglob("results.csv")), None
                         )
-                        if run_root:
-                            st.success("Run loaded — showing analytics below.")
-                            show_run_analytics(run_root, task_color)
-                        else:
+                        if not run_root:
                             st.error("results.csv not found in the zip.")
-
-            else:
-                st.markdown(
-                    '<p style="font-size:11px;color:#64748B;margin-bottom:8px">'
-                    'Paste the full path on your local machine. '
-                    'Use <strong>Save run</strong> to copy files into <code>saved_runs/</code>, '
-                    'then <code>git push</code> to publish to the cloud.</p>',
-                    unsafe_allow_html=True,
-                )
-                dir_path = st.text_input("Run directory path", key=f"dirpath_{task_name}",
-                                         placeholder=r"C:\...\runs\train\yolo_custom",
-                                         label_visibility="collapsed")
-                run_dir = Path(dir_path) if dir_path else None
-                if run_dir and run_dir.exists() and (run_dir / "results.csv").exists():
-                    _, btn_col = st.columns([3, 1])
-                    with btn_col:
-                        if st.button("Save run (no weights)", key=f"save_{task_name}",
-                                     type="primary", use_container_width=True):
-                            save_run(run_dir, task_run or task_name)
-                            st.success(f"Saved — now git push saved_runs/ to publish.")
-                            st.rerun()
-                    show_run_analytics(run_dir, task_color)
-                elif dir_path:
-                    st.warning("Path not found or missing results.csv.")
-                else:
-                    st.caption("Paste the full absolute path above.")
+                        else:
+                            show_run_analytics(run_root, task_color)
+                            st.divider()
+                            if st.button("Save this run to the site", key=f"save_{task_name}", type="primary"):
+                                save_run(run_root, task_run or task_name)
+                                st.success("Saved. Run `git add saved_runs/ && git push` to publish it to the cloud.")
 
         else:
             if has_saved:
