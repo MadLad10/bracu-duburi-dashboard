@@ -261,21 +261,48 @@ for tab, task in zip(tabs, tasks):
         has_saved = saved_run_dir and saved_run_dir.exists() and (saved_run_dir / "results.csv").exists()
 
         if auth.is_admin():
-            modes = ["Saved Run", "Import Directory"] if has_saved else ["Import Directory"]
+            if has_saved:
+                modes = ["Saved Run", "Upload Zip", "Import Directory (local only)"]
+            else:
+                modes = ["Upload Zip", "Import Directory (local only)"]
             view_mode = st.radio("View", modes, horizontal=True,
                                  key=f"viewmode_{task_name}", label_visibility="collapsed")
 
-            if view_mode == "Import Directory":
+            if view_mode == "Saved Run":
+                show_run_analytics(saved_run_dir, task_color)
+
+            elif view_mode == "Upload Zip":
                 st.markdown(
-                    '<div style="background:rgba(13,27,42,0.04);border:1px solid #E2E8F0;'
-                    'border-radius:10px;padding:12px 16px;margin-bottom:14px">'
-                    '<div style="font-size:11px;font-weight:700;color:#1E3A5F;margin-bottom:4px">'
-                    'Local import only</div>'
-                    '<div style="font-size:11px;color:#64748B;line-height:1.5">'
-                    'Paste the full path to a training run folder on <strong>this machine</strong>. '
-                    'Hit <strong>Save run</strong> to push it to the site — '
-                    'then it appears under Saved Run on the cloud too.'
-                    '</div></div>',
+                    '<p style="font-size:11px;color:#64748B;margin-bottom:8px">'
+                    'Upload a zip of your run folder — <strong>results.csv required, no .pt weights</strong>. '
+                    'To make it permanent, run <code>git add saved_runs/ && git push</code> after saving locally.</p>',
+                    unsafe_allow_html=True,
+                )
+                uploaded = st.file_uploader(
+                    "Drop zip here", type=["zip"],
+                    key=f"upload_admin_{task_name}", label_visibility="collapsed",
+                )
+                if uploaded:
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        zip_path = Path(tmpdir) / "run.zip"
+                        zip_path.write_bytes(uploaded.read())
+                        with zipfile.ZipFile(zip_path, "r") as zf:
+                            zf.extractall(tmpdir)
+                        run_root = next(
+                            (p.parent for p in Path(tmpdir).rglob("results.csv")), None
+                        )
+                        if run_root:
+                            st.success("Run loaded — showing analytics below.")
+                            show_run_analytics(run_root, task_color)
+                        else:
+                            st.error("results.csv not found in the zip.")
+
+            else:
+                st.markdown(
+                    '<p style="font-size:11px;color:#64748B;margin-bottom:8px">'
+                    'Paste the full path on your local machine. '
+                    'Use <strong>Save run</strong> to copy files into <code>saved_runs/</code>, '
+                    'then <code>git push</code> to publish to the cloud.</p>',
                     unsafe_allow_html=True,
                 )
                 dir_path = st.text_input("Run directory path", key=f"dirpath_{task_name}",
@@ -288,15 +315,13 @@ for tab, task in zip(tabs, tasks):
                         if st.button("Save run (no weights)", key=f"save_{task_name}",
                                      type="primary", use_container_width=True):
                             save_run(run_dir, task_run or task_name)
-                            st.success(f"Saved to saved_runs/{task_run or task_name}")
+                            st.success(f"Saved — now git push saved_runs/ to publish.")
                             st.rerun()
                     show_run_analytics(run_dir, task_color)
                 elif dir_path:
-                    st.warning(f"Path not found or missing results.csv — paste the full absolute path to your training run folder.")
+                    st.warning("Path not found or missing results.csv.")
                 else:
-                    st.caption("Paste the full path above to load a run.")
-            else:
-                show_run_analytics(saved_run_dir, task_color)
+                    st.caption("Paste the full absolute path above.")
 
         else:
             if has_saved:
