@@ -266,8 +266,21 @@ for tab, task in zip(tabs, tasks):
                                  key=f"viewmode_{task_name}", label_visibility="collapsed")
 
             if view_mode == "Import Directory":
+                st.markdown(
+                    '<div style="background:rgba(13,27,42,0.04);border:1px solid #E2E8F0;'
+                    'border-radius:10px;padding:12px 16px;margin-bottom:14px">'
+                    '<div style="font-size:11px;font-weight:700;color:#1E3A5F;margin-bottom:4px">'
+                    'Local import only</div>'
+                    '<div style="font-size:11px;color:#64748B;line-height:1.5">'
+                    'Paste the full path to a training run folder on <strong>this machine</strong>. '
+                    'Hit <strong>Save run</strong> to push it to the site — '
+                    'then it appears under Saved Run on the cloud too.'
+                    '</div></div>',
+                    unsafe_allow_html=True,
+                )
                 dir_path = st.text_input("Run directory path", key=f"dirpath_{task_name}",
-                                         placeholder=r"C:\...\runs\train\yolo_custom")
+                                         placeholder=r"C:\...\runs\train\yolo_custom",
+                                         label_visibility="collapsed")
                 run_dir = Path(dir_path) if dir_path else None
                 if run_dir and run_dir.exists() and (run_dir / "results.csv").exists():
                     _, btn_col = st.columns([3, 1])
@@ -279,9 +292,9 @@ for tab, task in zip(tabs, tasks):
                             st.rerun()
                     show_run_analytics(run_dir, task_color)
                 elif dir_path:
-                    st.warning("Directory not found or missing results.csv")
+                    st.warning(f"Path not found or missing results.csv — paste the full absolute path to your training run folder.")
                 else:
-                    st.info("Enter the path to a training run directory above.")
+                    st.caption("Paste the full path above to load a run.")
             else:
                 show_run_analytics(saved_run_dir, task_color)
 
