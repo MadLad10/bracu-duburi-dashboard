@@ -7,7 +7,7 @@ SHARED_CSS = """
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .stApp { background-color: #EEF2F7; }
-.block-container { padding-top: 0 !important; }
+.block-container { padding-top: 1rem !important; }
 
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0D1B2A 0%, #1B3A5C 100%);
@@ -69,7 +69,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     background: linear-gradient(135deg, #0D1B2A 0%, #1B3A5C 100%);
     padding: 28px 36px;
     border-radius: 14px;
-    margin: 8px 0 24px 0;
+    margin: 0 0 24px 0;
     box-shadow: 0 4px 20px rgba(13,27,42,0.2);
 }
 .page-header-title {
