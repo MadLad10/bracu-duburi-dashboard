@@ -157,9 +157,10 @@ def show_run_analytics(run_dir: Path, task_color: str) -> None:
                              subplot_titles=("mAP Scores", "Precision & Recall"),
                              vertical_spacing=0.12)
         if map50_col and map50_col in df.columns:
+            r, g, b = int(task_color[1:3], 16), int(task_color[3:5], 16), int(task_color[5:7], 16)
             fig2.add_trace(go.Scatter(x=epochs, y=df[map50_col], name="mAP50",
                                       line=dict(color=task_color, width=2.5),
-                                      fill="tozeroy", fillcolor=f"{task_color}15"), row=1, col=1)
+                                      fill="tozeroy", fillcolor=f"rgba({r},{g},{b},0.08)"), row=1, col=1)
         if map95_col and map95_col in df.columns:
             fig2.add_trace(go.Scatter(x=epochs, y=df[map95_col], name="mAP50-95",
                                       line=dict(color=COLORS["map95"], width=2.5),
