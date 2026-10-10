@@ -26,26 +26,55 @@ OWNER_STYLE = {
     "local": ("#F8FAFC", "#E2E8F0", "#475569", "Local"),
     "human": ("#FDF4FF", "#E9D5FF", "#7C3AED", "Human"),
 }
-# Node type → short human label, so the graph reads without n8n knowledge.
+# What each step does, in plain language. The page is for readers who want to
+# know what the automation does — not what an n8n node type is called.
+STEP_TEXT = {
+    # distribution
+    "Receive Pipeline Trigger": "A round begins — the training script sends over the annotator list, their clips, and where to report back.",
+    "Build Round State":        "Checks the request is complete and records who owes work this round.",
+    "State to File":            "Writes that record down…",
+    "Write Round State":        "…so the collecting side can pick it up later.",
+    "Fan Out Annotators":       "Splits the round into one job per annotator.",
+    "Loop Annotators":          "Works through them one at a time.",
+    "Read Clip Zip":            "Loads that person's video clip.",
+    "Send Gmail":               "Emails it to them with the class list and CVAT instructions.",
+    "Respond OK":               "Confirms back to the training script that the clips are out.",
+    # collection
+    "Gmail Trigger":            "Watches the inbox every minute for replies with attachments.",
+    "Extract Zip Attachment":   "Pulls out the annotation zip and works out who sent it.",
+    "Save Zip to Disk":         "Saves their labelled data.",
+    "Read Round State":         "Looks up the round record from when the clips went out.",
+    "Parse Round State":        "Reads who is still outstanding.",
+    "Update Round State":       "Ticks that person off — counting people, not emails, so replying twice can't finish a round early.",
+    "All Received?":            "Is everyone in?",
+    "Read Saved Zip":           "Yes — gathers the finished annotations…",
+    "Notify Pipeline":          "…and hands them back to the training script.",
+    "Partial - Log Only":       "Not yet — keep waiting for the rest.",
+}
+# Only shown as small print under each step.
 NODE_LABELS = {
-    "n8n-nodes-base.webhook":           "Webhook",
-    "n8n-nodes-base.code":              "Code",
-    "n8n-nodes-base.splitInBatches":    "Loop",
-    "n8n-nodes-base.readWriteFile":     "File I/O",
-    "n8n-nodes-base.gmail":             "Gmail",
-    "n8n-nodes-base.gmailTrigger":      "Gmail Trigger",
-    "n8n-nodes-base.respondToWebhook":  "Respond",
-    "n8n-nodes-base.httpRequest":       "HTTP",
-    "n8n-nodes-base.if":                "Branch",
-    "n8n-nodes-base.noOp":              "No-op",
+    "n8n-nodes-base.webhook":          "webhook",
+    "n8n-nodes-base.code":             "code",
+    "n8n-nodes-base.splitInBatches":   "loop",
+    "n8n-nodes-base.readWriteFile":    "file",
+    "n8n-nodes-base.convertToFile":    "file",
+    "n8n-nodes-base.extractFromFile":  "file",
+    "n8n-nodes-base.gmail":            "gmail",
+    "n8n-nodes-base.gmailTrigger":     "gmail",
+    "n8n-nodes-base.respondToWebhook": "respond",
+    "n8n-nodes-base.httpRequest":      "http",
+    "n8n-nodes-base.if":               "branch",
+    "n8n-nodes-base.noOp":             "wait",
 }
 
 
 def load_workflows() -> list:
     if not WORKFLOW_DIR.exists():
         return []
+    # send before receive — alphabetical order would tell the story backwards
+    order = {"send-annotation-emails.json": 0, "receive-annotation-replies.json": 1}
     out = []
-    for path in sorted(WORKFLOW_DIR.glob("*.json")):
+    for path in sorted(WORKFLOW_DIR.glob("*.json"), key=lambda q: (order.get(q.name, 99), q.name)):
         try:
             out.append((path, json.loads(path.read_text())))
         except Exception as e:
@@ -132,7 +161,7 @@ for col, (num, title, desc, owner) in zip(stage_cols, STAGES):
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── The actual workflows, read from the committed JSON ───────────────────────
-styles.section("Workflows in This Repo")
+styles.section("What The Automation Does")
 
 if not workflows:
     st.warning(
@@ -140,59 +169,88 @@ if not workflows:
         "Export them from n8n (Workflow → Download) and commit them there."
     )
 else:
-    total_nodes = sum(len(wf.get("nodes", [])) for _, wf in workflows)
+    total_steps = sum(len(wf.get("nodes", [])) for _, wf in workflows)
     m1, m2, m3 = st.columns(3)
-    with m1: styles.metric_card("Workflows", str(len(workflows)), "committed to repo", "")
-    with m2: styles.metric_card("Nodes",     str(total_nodes),    "across all workflows", "purple")
-    with m3: styles.metric_card("Trigger",   "Webhook",           "+ Gmail polling", "green")
+    with m1: styles.metric_card("Workflows", str(len(workflows)), "email out, collect back", "")
+    with m2: styles.metric_card("Steps",     str(total_steps),    "fully automated", "purple")
+    with m3: styles.metric_card("Verified",  "n8n 2.26",          "runs a round end to end", "green")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    BLURB = {
+        "AUV - Send Annotation Emails":
+            "Takes a list of annotators and gets each of them their own video clip, "
+            "with instructions, without anyone sending a single email by hand.",
+        "AUV - Receive Annotation Replies":
+            "Watches for the labelled data coming back, keeps track of who has replied, "
+            "and only kicks off training once the whole round is in.",
+    }
+
     for path, wf in workflows:
         levels = node_levels(wf)
-        nodes = [n for lvl in levels for n in lvl]
-        with st.expander(f"**{wf.get('name', path.stem)}** — {len(nodes)} nodes", expanded=True):
-            # Node graph: one column per depth level, stacked cards where a
-            # level holds parallel branches.
-            chain = ('<div style="display:flex;flex-wrap:wrap;gap:6px;'
-                     'align-items:stretch;margin-bottom:14px">')
-            for i, level in enumerate(levels):
-                chain += '<div style="display:flex;flex-direction:column;gap:6px;justify-content:center">'
-                for n in level:
-                    label = NODE_LABELS.get(n.get("type", ""), n.get("type", "").split(".")[-1])
-                    chain += (
-                        f'<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;'
-                        f'padding:8px 12px;box-shadow:0 1px 4px rgba(13,27,42,0.05)">'
-                        f'<div style="font-size:11px;font-weight:800;color:#0F172A">{n.get("name","")}</div>'
-                        f'<div style="font-size:9px;color:#94A3B8;text-transform:uppercase;'
-                        f'letter-spacing:1px;margin-top:2px">{label}</div></div>'
-                    )
-                chain += '</div>'
-                if i < len(levels) - 1:
-                    chain += ('<span style="color:#CBD5E1;font-size:14px;display:flex;'
-                              'align-items:center">&rarr;</span>')
-            chain += '</div>'
-            st.markdown(chain, unsafe_allow_html=True)
-            if any(len(lvl) > 1 for lvl in levels):
-                st.caption("Stacked nodes are parallel branches, not sequential steps.")
+        nodes  = [n for lvl in levels for n in lvl]
+        title  = wf.get("name", path.stem)
+        pretty = title.replace("AUV - ", "")
 
-            # inline code nodes — the real logic worth reading
-            code_nodes = [n for n in nodes if n.get("type") == "n8n-nodes-base.code"]
-            for n in code_nodes:
-                st.markdown(
-                    f'<p style="font-size:11px;font-weight:700;color:#475569;'
-                    f'margin:8px 0 2px">{n["name"]} — JavaScript</p>',
-                    unsafe_allow_html=True,
+        st.markdown(
+            f'<p style="font-size:15px;font-weight:900;color:#0F172A;margin:18px 0 2px">{pretty}</p>'
+            f'<p style="font-size:12px;color:#64748B;line-height:1.6;margin:0 0 12px;max-width:760px">'
+            f'{BLURB.get(title, "")}</p>',
+            unsafe_allow_html=True,
+        )
+
+        step_no = 0
+        for level in levels:
+            branching = len(level) > 1
+            if branching:
+                cols = st.columns(len(level))
+            for j, n in enumerate(level):
+                name = n.get("name", "")
+                text = STEP_TEXT.get(name, name)
+                kind = NODE_LABELS.get(n.get("type", ""), "step")
+                if not branching:
+                    step_no += 1
+                    num = f"{step_no:02d}"
+                    bg, bdr = "#FFFFFF", "#E2E8F0"
+                else:
+                    num = "↳"
+                    bg, bdr = "#F8FAFC", "#E2E8F0"
+                block = (
+                    f'<div style="background:{bg};border:1px solid {bdr};border-radius:10px;'
+                    f'padding:12px 16px;margin-bottom:8px;display:flex;gap:14px;align-items:flex-start">'
+                    f'<div style="font-size:11px;font-weight:900;color:#94A3B8;min-width:20px;'
+                    f'padding-top:1px">{num}</div>'
+                    f'<div><div style="font-size:13px;color:#1E293B;line-height:1.55">{text}</div>'
+                    f'<div style="font-size:10px;color:#CBD5E1;margin-top:3px">{name} · {kind}</div>'
+                    f'</div></div>'
                 )
-                st.code(n.get("parameters", {}).get("jsCode", ""), language="javascript")
+                if branching:
+                    with cols[j]:
+                        st.markdown(block, unsafe_allow_html=True)
+                else:
+                    st.markdown(block, unsafe_allow_html=True)
 
+        c1, c2 = st.columns([1, 3])
+        with c1:
             st.download_button(
-                "Download JSON (import into n8n)",
+                "Download for n8n",
                 data=path.read_text(),
                 file_name=path.name,
                 mime="application/json",
                 key=f"dl_{path.stem}",
             )
+        with c2:
+            with st.expander("Show the JavaScript behind these steps"):
+                code_nodes = [n for n in nodes if n.get("type") == "n8n-nodes-base.code"]
+                if not code_nodes:
+                    st.caption("No code steps in this workflow.")
+                for n in code_nodes:
+                    st.markdown(
+                        f'<p style="font-size:11px;font-weight:700;color:#475569;'
+                        f'margin:6px 0 2px">{n["name"]}</p>',
+                        unsafe_allow_html=True,
+                    )
+                    st.code(n.get("parameters", {}).get("jsCode", ""), language="javascript")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
