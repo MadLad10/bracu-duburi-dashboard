@@ -23,10 +23,15 @@ substring, so runs from different Ultralytics versions load without edits.
 locating `results.csv` at any depth, then renders analytics immediately. Admins can
 persist a run into `saved_runs/`; visitors get a temporary view that isn't saved.
 
-**Annotation pipeline docs.** The [Pipeline page](pages/3_Pipeline.py) reads the
-committed n8n workflow JSON from [`pipeline/workflows/`](pipeline/workflows/) and
-renders the real node graph, the JavaScript in each Code node, and a download button
-to import it into your own n8n. See [`pipeline/README.md`](pipeline/README.md).
+**Annotation pipeline.** Two n8n workflows automate the annotation round-trip:
+clips go out to annotators by email, YOLO-format exports come back, and a callback
+fires once the round is complete. Both were executed on n8n 2.26.8 end to end
+(Gmail nodes excepted — those need a real OAuth credential). The
+[Pipeline page](pages/3_Pipeline.py) reads the committed workflow JSON from
+[`pipeline/workflows/`](pipeline/workflows/) and renders the real node graph, the
+JavaScript in each Code node, and a download button to import them into your own
+n8n. Setup, the required `N8N_RESTRICT_FILE_ACCESS_TO` setting, and known
+limitations are in [`pipeline/README.md`](pipeline/README.md).
 
 **Content-driven.** Tasks, descriptions, accent colours and run bindings live in
 [`content/site.yaml`](content/site.yaml), editable in-app in admin mode.

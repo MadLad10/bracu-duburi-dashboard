@@ -2,84 +2,134 @@
   "name": "AUV - Send Annotation Emails",
   "nodes": [
     {
-      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auv-pipeline-send",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "receive-pipeline-trigger",
       "name": "Receive Pipeline Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        240,
+        -760,
         300
-      ],
-      "parameters": {
-        "path": "auv-pipeline-send",
-        "responseMode": "responseNode",
-        "options": {}
-      }
+      ]
     },
     {
-      "id": "a1b2c3d4-0001-0001-0001-000000000002",
-      "name": "Store Context",
+      "parameters": {
+        "jsCode": "// Validate the trigger payload and build the round-state record.\n// State goes to a file, not workflow static data: static data is scoped to the\n// workflow that writes it, so the receive workflow could never read it.\nconst body = $input.first().json.body ?? $input.first().json;\n\nconst annotators = body.annotators;\nif (!Array.isArray(annotators) || annotators.length === 0) {\n  throw new Error('payload.annotators must be a non-empty array');\n}\nif (!body.callback_url) {\n  throw new Error('payload.callback_url is required');\n}\nfor (const a of annotators) {\n  if (!a.email || !a.zip_path) {\n    throw new Error('each annotator needs email and zip_path');\n  }\n}\n\nreturn [{ json: {\n  round_id:     'round-' + Date.now(),\n  callback_url: body.callback_url,\n  expected:     annotators.length,\n  save_dir:     body.save_dir || '/tmp/auv_replies',\n  classes:      body.classes || [],\n  received:     0,\n  saved_paths:  [],\n  senders:      [],\n  started_at:   new Date().toISOString(),\n} }];"
+      },
+      "id": "build-round-state",
+      "name": "Build Round State",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        460,
+        -540,
         300
-      ],
-      "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst body = $input.first().json;\nstaticData.callbackUrl = body.callback_url;\nstaticData.expected    = body.expected;\nstaticData.saveDir     = body.save_dir || '/tmp/auv_replies';\nstaticData.received    = 0;\nreturn body.annotators.map(a => ({ json: { ...a, classes: body.classes.join(', ') } }));"
-      }
+      ]
     },
     {
-      "id": "a1b2c3d4-0001-0001-0001-000000000003",
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "round_state.json"
+        }
+      },
+      "id": "state-to-file",
+      "name": "State to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/tmp/auv_round_state.json",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "write-round-state",
+      "name": "Write Round State",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fan out one item per annotator, carrying the class list for the email body.\nconst state = $('Build Round State').first().json;\nconst body  = $('Receive Pipeline Trigger').first().json.body ?? $('Receive Pipeline Trigger').first().json;\nreturn body.annotators.map(a => ({\n  json: { ...a, classes: (state.classes || []).join(', '), round_id: state.round_id },\n}));"
+      },
+      "id": "fan-out-annotators",
+      "name": "Fan Out Annotators",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop-annotators",
       "name": "Loop Annotators",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        680,
+        340,
         300
-      ],
-      "parameters": {
-        "batchSize": 1,
-        "options": {}
-      }
+      ]
     },
     {
-      "id": "a1b2c3d4-0001-0001-0001-000000000004",
-      "name": "Read Zip File",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1,
-      "position": [
-        900,
-        300
-      ],
       "parameters": {
         "operation": "read",
         "fileSelector": "={{ $json.zip_path }}",
-        "options": {}
-      }
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "id": "read-clip-zip",
+      "name": "Read Clip Zip",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        560,
+        400
+      ]
     },
     {
-      "id": "a1b2c3d4-0001-0001-0001-000000000005",
-      "name": "Send Gmail",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        300
-      ],
       "parameters": {
-        "sendTo": "={{ $json.email }}",
-        "subject": "={{ '[AUV Annotation] Part ' + $json.part_num + ' — please annotate and reply with zip' }}",
+        "sendTo": "={{ $('Loop Annotators').item.json.email }}",
+        "subject": "={{ '[AUV Annotation] Part ' + $('Loop Annotators').item.json.part_num + ' — please annotate and reply with zip' }}",
         "emailType": "text",
-        "message": "={{ 'Hi ' + $json.name + ',\\n\\nPlease annotate Part ' + $json.part_num + ' using CVAT.\\n\\nClasses: ' + $json.classes + '\\n\\nSteps:\\n1. Create CVAT task → upload attached zip\\n2. Annotate all frames\\n3. Export as YOLO 1.1 format\\n4. Reply to this email with exported zip attached\\n\\nThanks!' }}",
+        "message": "={{ 'Hi ' + $('Loop Annotators').item.json.name + ',\\n\\nPlease annotate Part ' + $('Loop Annotators').item.json.part_num + ' using CVAT.\\n\\nClasses: ' + $('Loop Annotators').item.json.classes + '\\n\\nSteps:\\n1. Create CVAT task → upload the attached zip\\n2. Annotate all frames\\n3. Export as YOLO 1.1 format\\n4. Reply to this email with the exported zip attached\\n\\nThanks!' }}",
         "options": {
           "attachmentsUi": {
             "attachmentsBinary": [
-              {}
+              {
+                "property": "data"
+              }
             ]
           }
         }
       },
+      "id": "send-gmail",
+      "name": "Send Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        780,
+        400
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
@@ -88,18 +138,18 @@
       }
     },
     {
-      "id": "a1b2c3d4-0001-0001-0001-000000000006",
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'emails_sent', round_id: $('Build Round State').first().json.round_id, expected: $('Build Round State').first().json.expected }) }}"
+      },
+      "id": "respond-ok",
       "name": "Respond OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1340,
-        300
-      ],
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ status: 'emails_sent', count: $input.all().length }) }}"
-      }
+        560,
+        180
+      ]
     }
   ],
   "connections": {
@@ -107,14 +157,47 @@
       "main": [
         [
           {
-            "node": "Store Context",
+            "node": "Build Round State",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Store Context": {
+    "Build Round State": {
+      "main": [
+        [
+          {
+            "node": "State to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "State to File": {
+      "main": [
+        [
+          {
+            "node": "Write Round State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Round State": {
+      "main": [
+        [
+          {
+            "node": "Fan Out Annotators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fan Out Annotators": {
       "main": [
         [
           {
@@ -129,21 +212,21 @@
       "main": [
         [
           {
-            "node": "Read Zip File",
+            "node": "Respond OK",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Respond OK",
+            "node": "Read Clip Zip",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Read Zip File": {
+    "Read Clip Zip": {
       "main": [
         [
           {

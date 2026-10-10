@@ -2,14 +2,6 @@
   "name": "AUV - Receive Annotation Replies",
   "nodes": [
     {
-      "id": "b2c3d4e5-0002-0002-0002-000000000001",
-      "name": "Gmail Trigger",
-      "type": "n8n-nodes-base.gmailTrigger",
-      "typeVersion": 1,
-      "position": [
-        240,
-        300
-      ],
       "parameters": {
         "pollTimes": {
           "item": [
@@ -22,8 +14,18 @@
         "filters": {
           "hasAttachment": true
         },
-        "options": {}
+        "options": {
+          "downloadAttachments": true
+        }
       },
+      "id": "gmail-trigger",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        300
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
@@ -32,55 +34,114 @@
       }
     },
     {
-      "id": "b2c3d4e5-0002-0002-0002-000000000002",
-      "name": "Filter Zip Attachments",
+      "parameters": {
+        "jsCode": "// Gmail attachments arrive as BINARY properties (attachment_0, ...) when the\n// trigger has downloadAttachments enabled — not as json.attachments[].content.\nconst item = $input.first();\nconst bin  = item.binary || {};\nconst key  = Object.keys(bin).find(\n  k => (bin[k].fileName || '').toLowerCase().endsWith('.zip')\n);\nif (!key) return [];          // not an annotation reply — ignore this mail\n\n// Sender header shape varies by trigger mode; try each.\nconst j = item.json;\nlet from = j.From ?? j.from;\nif (from && typeof from === 'object') from = from.value?.[0]?.address;\nif (!from) {\n  const headers = j.payload?.headers || [];\n  from = headers.find(h => (h.name || '').toLowerCase() === 'from')?.value || 'unknown';\n}\nfrom = String(from);\nconst angle = from.match(/<([^>]+)>/);     // \"Name <a@b.com>\" -> \"a@b.com\"\nif (angle) from = angle[1];\n\nconst slug = from.split('@')[0].replace(/[^A-Za-z0-9_-]/g, '_');\n\nreturn [{\n  json: { from, slug, filename: bin[key].fileName, saved_path: `/tmp/auv_reply_${slug}.zip` },\n  binary: { data: bin[key] },\n}];"
+      },
+      "id": "extract-zip-attachment",
+      "name": "Extract Zip Attachment",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        460,
+        -540,
         300
-      ],
-      "parameters": {
-        "jsCode": "const msg = $input.first().json;\nconst attachments = msg.attachments || [];\nconst zips = attachments.filter(a => (a.filename || '').toLowerCase().endsWith('.zip'));\nif (zips.length === 0) return [];\nreturn [{ json: { from: msg.from?.value?.[0]?.address || 'unknown', filename: zips[0].filename, content: zips[0].content } }];"
-      }
+      ]
     },
     {
-      "id": "b2c3d4e5-0002-0002-0002-000000000003",
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.saved_path }}",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "save-zip-to-disk",
       "name": "Save Zip to Disk",
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        680,
+        -320,
         300
-      ],
-      "parameters": {
-        "operation": "write",
-        "fileName": "={{ $getWorkflowStaticData('global').saveDir + '/annotated_' + $json.from.split('@')[0] + '.zip' }}",
-        "options": {}
-      }
+      ]
     },
     {
-      "id": "b2c3d4e5-0002-0002-0002-000000000004",
-      "name": "Check If All Received",
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "/tmp/auv_round_state.json",
+        "options": {
+          "dataPropertyName": "state"
+        }
+      },
+      "id": "read-round-state",
+      "name": "Read Round State",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "state",
+        "destinationKey": "state",
+        "options": {}
+      },
+      "id": "parse-round-state",
+      "name": "Parse Round State",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Round state comes from the shared file written by the send workflow.\n// convertToFile wraps items in an array, so the state file holds [ {...} ].\nconst raw   = $json.state;\nconst state = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});\nconst meta  = $('Extract Zip Attachment').first().json;\n\n// Count DISTINCT senders, so one annotator replying twice can't complete a round.\nconst senders = state.senders || [];\nconst duplicate = senders.includes(meta.from);\nif (!duplicate) {\n  senders.push(meta.from);\n  state.saved_paths = [...(state.saved_paths || []), meta.saved_path];\n}\nstate.senders  = senders;\nstate.received = senders.length;\nstate.expected = state.expected || 0;\n\n// expected === 0 means the state file was missing or unreadable. Stay put rather\n// than firing the callback on the first reply.\nconst all_done = state.expected > 0 && state.received >= state.expected;\n\nreturn [{ json: {\n  ...state, all_done, duplicate,\n  from: meta.from, filename: meta.filename, saved_path: meta.saved_path,\n} }];"
+      },
+      "id": "update-round-state",
+      "name": "Update Round State",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
+        340,
         300
-      ],
-      "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.received = (staticData.received || 0) + 1;\nconst item = $input.first().json;\nconst savedPath = (staticData.saveDir || '/tmp/auv_replies') + '/annotated_' + item.from.split('@')[0] + '.zip';\nif (!staticData.savedPaths) staticData.savedPaths = [];\nstaticData.savedPaths.push(savedPath);\nreturn [{ json: { received: staticData.received, expected: staticData.expected || 0, callbackUrl: staticData.callbackUrl, savedPaths: staticData.savedPaths, from: item.from, filename: item.filename, allDone: staticData.received >= (staticData.expected || 1) } }];"
-      }
+      ]
     },
     {
-      "id": "b2c3d4e5-0002-0002-0002-000000000005",
-      "name": "All Received?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "round_state.json"
+        }
+      },
+      "id": "state-to-file",
+      "name": "State to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
       "position": [
-        1120,
+        560,
         300
-      ],
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/tmp/auv_round_state.json",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "write-round-state",
+      "name": "Write Round State",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        780,
+        300
+      ]
+    },
+    {
       "parameters": {
         "conditions": {
           "options": {
@@ -91,7 +152,7 @@
           "conditions": [
             {
               "id": "cond-001",
-              "leftValue": "={{ $json.allDone }}",
+              "leftValue": "={{ $('Update Round State').first().json.all_done }}",
               "rightValue": true,
               "operator": {
                 "type": "boolean",
@@ -101,36 +162,89 @@
           ],
           "combinator": "and"
         }
-      }
+      },
+      "id": "all-received",
+      "name": "All Received?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
     },
     {
-      "id": "b2c3d4e5-0002-0002-0002-000000000006",
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $('Update Round State').first().json.saved_path }}",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "id": "read-saved-zip",
+      "name": "Read Saved Zip",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Update Round State').first().json.callback_url }}",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "all_complete"
+            },
+            {
+              "name": "round_id",
+              "value": "={{ $('Update Round State').first().json.round_id }}"
+            },
+            {
+              "name": "received",
+              "value": "={{ $('Update Round State').first().json.received }}"
+            },
+            {
+              "name": "expected",
+              "value": "={{ $('Update Round State').first().json.expected }}"
+            },
+            {
+              "name": "saved_paths",
+              "value": "={{ JSON.stringify($('Update Round State').first().json.saved_paths) }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-pipeline",
       "name": "Notify Pipeline",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1340,
-        220
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $json.callbackUrl }}",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ email: $json.from, filename: $json.filename, zip_base64: Buffer.from(require('fs').readFileSync($json.savedPaths[$json.savedPaths.length - 1])).toString('base64'), status: 'all_complete', received: $json.received }) }}",
-        "options": {}
-      }
+        1440,
+        200
+      ]
     },
     {
-      "id": "b2c3d4e5-0002-0002-0002-000000000007",
-      "name": "Partial — Log Only",
+      "parameters": {},
+      "id": "partial---log-only",
+      "name": "Partial - Log Only",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1340,
+        1220,
         400
-      ],
-      "parameters": {}
+      ]
     }
   ],
   "connections": {
@@ -138,14 +252,14 @@
       "main": [
         [
           {
-            "node": "Filter Zip Attachments",
+            "node": "Extract Zip Attachment",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Filter Zip Attachments": {
+    "Extract Zip Attachment": {
       "main": [
         [
           {
@@ -160,14 +274,58 @@
       "main": [
         [
           {
-            "node": "Check If All Received",
+            "node": "Read Round State",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Check If All Received": {
+    "Read Round State": {
+      "main": [
+        [
+          {
+            "node": "Parse Round State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Round State": {
+      "main": [
+        [
+          {
+            "node": "Update Round State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Round State": {
+      "main": [
+        [
+          {
+            "node": "State to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "State to File": {
+      "main": [
+        [
+          {
+            "node": "Write Round State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Round State": {
       "main": [
         [
           {
@@ -182,14 +340,25 @@
       "main": [
         [
           {
-            "node": "Notify Pipeline",
+            "node": "Read Saved Zip",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Partial — Log Only",
+            "node": "Partial - Log Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Saved Zip": {
+      "main": [
+        [
+          {
+            "node": "Notify Pipeline",
             "type": "main",
             "index": 0
           }
