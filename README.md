@@ -7,7 +7,7 @@ documents the n8n workflows that automate dataset annotation.
 Built for Team BRACU Duburi (BRAC University, Dhaka) — Autonomous Underwater Vehicle,
 RoboSub 2026, Irvine CA.
 
-<!-- Add once deployed: **[Live demo](https://your-app.streamlit.app)** -->
+**[▶ Live demo](https://bracu-duburi-dashboard-l4v7nhzmtree6kbggb9nah.streamlit.app/)**
 
 ## What it does
 
@@ -110,7 +110,8 @@ optional; when `GOOGLE_CLIENT_ID` is set, only `ADMIN_EMAIL` may sign in.
    `.streamlit/secrets.toml.example` with real values. Set `REDIRECT_URI` to the
    app's final URL, and add that same URL to your Google OAuth client's authorised
    redirect URIs.
-4. Deploy, then put the URL at the top of this README.
+4. Deploy, then under **Settings → Sharing** set *Who can view this app* to
+   **Public**, or visitors get a sign-in wall instead of the dashboard.
 
 **Note on persistence:** Streamlit Cloud filesystems are ephemeral. Runs saved via
 admin upload survive only until the container restarts — commit them to
