@@ -1,3 +1,4 @@
+from hmac import compare_digest
 from urllib.parse import urlencode
 import streamlit as st
 import requests as _req
@@ -217,7 +218,11 @@ def admin_widget() -> None:
                                     label_visibility="collapsed",
                                     placeholder="Admin password")
         if st.sidebar.button("Sign in", use_container_width=True, key="admin_login_btn"):
-            if pwd == _cfg("ADMIN_PASSWORD", "bracuduburi2026"):
+            expected = _cfg("ADMIN_PASSWORD")
+            if not expected:
+                # Fail closed: no password configured means no password login.
+                st.sidebar.error("Admin login is not configured on this deployment.")
+            elif compare_digest(pwd, expected):
                 st.session_state["is_admin"]    = True
                 st.session_state["admin_email"] = "admin"
                 st.rerun()

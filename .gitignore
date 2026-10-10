@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Streamlit secrets — never commit
+.streamlit/secrets.toml
+
+# YOLO weights and local training output
+*.pt
+runs/
+
+# OS
+.DS_Store
